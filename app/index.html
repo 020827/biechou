@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>少抽 · 抽烟记录</title>
+<meta name="theme-color" content="#f4f3ee">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="少抽">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="记录每一根烟的时间与花费，看清自己的习惯。">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f4f3ee;
+  --card:#fffdfa;
+  --ink:#18211d;
+  --muted:#78837d;
+  --line:#e7e5dc;
+  --green:#1f6f5c;
+  --green-2:#2f8a70;
+  --green-soft:#e9f2ee;
+  --amber:#b4562a;
+  --amber-soft:#fbeee6;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
+}
+button{font-family:inherit;cursor:pointer}
+.app{max-width:480px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 0}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;padding:0 2px}
+.brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;letter-spacing:1px}
+.brand i{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(31,111,92,.12)}
+.datelabel{font-size:12px;color:var(--muted);letter-spacing:.3px}
+
+/* ---------- cards ---------- */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:17px 18px;margin-bottom:12px;
+  box-shadow:0 1px 2px rgba(24,33,29,.03);
+}
+.card h2{font-size:14px;font-weight:650;margin:0;letter-spacing:.2px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.hint{font-size:12px;color:var(--muted)}
+.card-head .hint{font-variant-numeric:tabular-nums}
+.bottom-hint{font-size:11.5px;color:var(--muted);margin:12px 0 0;text-align:center}
+
+/* ---------- banner ---------- */
+.banner{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--amber-soft);border:1px solid #f2ddcd;color:#8a4d2b;
+  border-radius:15px;padding:11px 13px;margin-bottom:12px;font-size:13px;
+}
+.banner button{border:0;background:#8a4d2b;color:#fff;border-radius:9px;padding:6px 11px;font-size:12px;font-weight:600;white-space:nowrap}
+
+/* ---------- hero ---------- */
+.hero{background:linear-gradient(155deg,#e9f2ee 0%,#f3f6f1 55%,#fbf8f0 100%);border-color:#dfe9e3}
+.hero-grid{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.k{font-size:12px;color:var(--muted);letter-spacing:.5px}
+.bignum{
+  font-size:46px;line-height:1.05;font-weight:650;letter-spacing:-2px;margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+.bignum em{font-size:13px;font-weight:500;font-style:normal;letter-spacing:0;margin-left:5px;color:var(--muted)}
+.bignum.bump{animation:bump .38s cubic-bezier(.2,1.4,.4,1)}
+@keyframes bump{0%{transform:scale(.86);opacity:.6}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+.hero-right{text-align:right}
+.money{font-size:23px;font-weight:650;letter-spacing:-.6px;margin-top:9px;font-variant-numeric:tabular-nums}
+.bar{height:7px;border-radius:99px;background:rgba(31,111,92,.13);overflow:hidden;margin-top:16px}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#3a9a7e,#1f6f5c);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.bar.over{background:rgba(180,86,42,.14)}
+.bar.over i{background:linear-gradient(90deg,#d08a5f,#b4562a)}
+.prog-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--muted)}
+.prog-meta b{color:var(--green);font-weight:650;font-variant-numeric:tabular-nums}
+.prog-meta .warn{color:var(--amber);font-weight:600}
+
+/* ---------- primary action ---------- */
+.primary{
+  width:100%;border:0;border-radius:18px;padding:17px 18px;
+  background:linear-gradient(180deg,#23806a,#1b6250);color:#fff;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  box-shadow:0 12px 26px -14px rgba(31,111,92,.85);
+  transition:transform .12s ease,filter .12s ease;
+}
+.primary:active{transform:scale(.985);filter:brightness(.94)}
+.primary span{font-size:19px;font-weight:650;letter-spacing:1.5px}
+.primary small{font-size:11.5px;font-weight:400;opacity:.72;letter-spacing:.6px}
+.primary small b{font-weight:600;font-variant-numeric:tabular-nums}
+.smoke{margin:2px 0 10px;animation:rise .5s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- ghost / resist ---------- */
+.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:16px;padding:14px 16px;font-size:14.5px;font-weight:600;transition:background .15s}
+.ghost:active{background:#f6f5ef}
+.resist{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-bottom:12px;text-align:left}
+.badge{font-size:11.5px;font-weight:650;color:var(--green);background:var(--green-soft);padding:5px 10px;border-radius:99px;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* ---------- timeline ---------- */
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{
+  display:grid;grid-template-columns:12px 52px 1fr auto;align-items:center;gap:9px;
+  padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer;
+}
+.timeline li:last-child{border-bottom:0;padding-bottom:1px}
+.tl-dot{width:7px;height:7px;border-radius:50%;background:var(--green);justify-self:center;opacity:.85}
+.timeline li:first-child .tl-dot{box-shadow:0 0 0 4px rgba(31,111,92,.12)}
+.tl-time{font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+.tl-gap{font-size:12px;color:var(--muted)}
+.tl-cost{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{margin:6px 0 2px;font-size:13.5px;color:var(--muted);line-height:1.75}
+.weeknote{margin:-4px 0 0;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- stats ---------- */
+.seg{display:flex;gap:4px;background:#eceae2;border-radius:13px;padding:4px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:transparent;border-radius:10px;padding:8px 0;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(24,33,29,.1)}
+.legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);font-weight:400}
+.legend i{display:inline-block;width:16px;border-top:1px dashed rgba(180,86,42,.6)}
+.chart{position:relative;margin-top:2px;padding-top:16px}
+.bars{display:flex;align-items:flex-end;gap:6px}
+.bars.dense{gap:2px}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end}
+.track{height:110px;display:flex;align-items:flex-end}
+.fill{
+  width:66%;margin:0 auto;border-radius:5px 5px 2px 2px;position:relative;
+  background:linear-gradient(180deg,#3a9a7e,#1f6f5c);
+}
+.bars.dense .fill{width:100%;margin:0}
+.fill.over{background:linear-gradient(180deg,#d4906a,#b4562a)}
+.fill.today{outline:2px solid rgba(31,111,92,.16);outline-offset:1px}
+.fill b{
+  position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  font-size:10.5px;font-weight:650;color:var(--muted);font-variant-numeric:tabular-nums;
+}
+.fill b.in{top:6px;color:#fff;opacity:.92}
+.xlab{height:21px;line-height:21px;text-align:center;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.limitline{position:absolute;left:0;right:0;border-top:1px dashed rgba(180,86,42,.5);pointer-events:none}
+
+.hours{display:flex;align-items:flex-end;gap:3px;height:66px}
+.hcol{flex:1;height:100%;display:flex;align-items:flex-end}
+.hcol i{width:100%;min-height:0;border-radius:2px;background:#d9e5df}
+.hcol i.peak{background:var(--green)}
+.haxis{display:flex;justify-content:space-between;margin-top:5px;font-size:9.5px;color:var(--muted)}
+.insight{margin:11px 0 0;font-size:12.5px;color:var(--muted)}
+.insight b{color:var(--ink);font-weight:650}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px}
+.tile span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile strong{font-size:20px;font-weight:650;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.tile strong em{font-size:11px;font-style:normal;font-weight:500;color:var(--muted);margin-left:3px;letter-spacing:0}
+
+.save{background:linear-gradient(150deg,#e9f2ee,#f8faf5);border-color:#ddeae3}
+.save .save-label{font-size:12px;color:#4c6a5e}
+.save .save-big{font-size:31px;font-weight:650;color:var(--green);letter-spacing:-1.2px;margin:5px 0 3px;font-variant-numeric:tabular-nums}
+.save .save-sub{font-size:12.5px;color:#4c6a5e}
+.save.neutral .save-big{font-size:19px;color:var(--ink);letter-spacing:0}
+
+/* ---------- settings ---------- */
+.field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.field:last-of-type{border-bottom:0;padding-bottom:2px}
+.inputwrap{display:flex;align-items:center;gap:6px}
+.inputwrap input{
+  width:88px;text-align:right;border:0;background:var(--green-soft);border-radius:10px;
+  padding:8px 10px;font-family:inherit;font-size:15px;font-weight:650;color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.inputwrap input:focus{outline:2px solid rgba(31,111,92,.35);outline-offset:1px}
+.inputwrap em{font-style:normal;font-size:12px;color:var(--muted);min-width:14px}
+.derived{margin-top:13px;padding-top:12px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+.derived b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
+.wide{width:100%;margin-top:8px;text-align:left;display:flex;align-items:center;justify-content:space-between}
+.wide:first-of-type{margin-top:2px}
+.wide small{font-size:11.5px;color:var(--muted);font-weight:400}
+.wide.danger{color:var(--amber)}
+.footnote{font-size:11.5px;color:var(--muted);line-height:1.8;margin:6px 4px 0}
+.install{background:linear-gradient(150deg,#eef3ea,#f8faf5);border-color:#dde8d9}
+.install p{margin:0;font-size:12.5px;color:#4c6a5e;line-height:1.75}
+.install-steps{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:#4c6a5e;line-height:1.9}
+.install .primary{margin-top:12px;padding:14px}
+.install .primary span{font-size:15.5px;letter-spacing:.5px}
+
+/* ---------- tabs ---------- */
+.tabbar{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(12px + env(safe-area-inset-bottom));
+  width:min(448px,calc(100% - 32px));display:flex;gap:4px;padding:5px;
+  background:rgba(255,253,250,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line);border-radius:19px;
+  box-shadow:0 14px 34px -20px rgba(24,33,29,.55);z-index:30;
+}
+.tabbar button{flex:1;border:0;background:transparent;border-radius:14px;padding:10px 0;font-size:13.5px;font-weight:650;color:var(--muted);transition:background .18s,color .18s}
+.tabbar button.active{background:var(--ink);color:#fff}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
+  transform:translate(-50%,18px);opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);
+  background:#1c2621;color:#fff;padding:11px 15px;border-radius:14px;font-size:13.5px;
+  box-shadow:0 14px 34px -14px rgba(0,0,0,.5);transition:transform .25s ease,opacity .25s ease;z-index:40;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;background:transparent;color:#8fd6bd;font-size:13.5px;font-weight:700;padding:2px 0;white-space:nowrap}
+.toast button[hidden]{display:none}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:22px}
+.modal[hidden]{display:none}
+.modal .backdrop{position:absolute;inset:0;background:rgba(24,33,29,.45);backdrop-filter:blur(2px)}
+.sheet{
+  position:relative;width:100%;max-width:350px;background:var(--card);border-radius:22px;padding:20px;
+  box-shadow:0 30px 70px -24px rgba(0,0,0,.5);
+}
+.modal.show .sheet{animation:pop .24s cubic-bezier(.2,1.1,.3,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.sheet h3{margin:0 0 14px;font-size:16px;font-weight:650}
+.sheet input[type=datetime-local]{
+  width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;
+  font-family:inherit;font-size:15px;background:#faf9f5;color:var(--ink);
+}
+.sheet-actions{display:flex;gap:10px;margin-top:16px}
+.sheet-actions .ghost{flex:1;padding:13px}
+.sheet-actions .primary{flex:1.4;padding:13px;font-size:15px;letter-spacing:.5px}
+.linkbtn{display:block;width:100%;margin-top:10px;background:none;border:0;color:var(--muted);font-size:13px;padding:6px}
+
+@media (max-width:360px){
+  .bignum{font-size:40px}
+  .primary span{font-size:17.5px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><i></i>少抽</div>
+    <div class="datelabel" id="todayLabel"></div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav class="tabbar" aria-label="主导航">
+  <button data-tab="home" class="active" aria-label="记录">记录</button>
+  <button data-tab="stats" aria-label="统计">统计</button>
+  <button data-tab="settings" aria-label="设置">设置</button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastMsg"></span><button id="toastAct" hidden>撤销</button>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="backdrop" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="修改记录">
+    <h3>修改这条记录</h3>
+    <input type="datetime-local" id="editTime">
+    <div class="sheet-actions">
+      <button class="ghost" id="editDelete">删除</button>
+      <button class="primary" id="editSave">保存</button>
+    </div>
+    <button class="linkbtn" data-close>取消</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+
+<script>
+(function(){
+'use strict';
+
+/* ============ 基础工具 ============ */
+var KEY = 'shaochou.v1';
+var DEFAULTS = { pricePerPack: 25, cigsPerPack: 20, dailyLimit: 10, baselinePerDay: 20 };
+var WEEK = ['周日','周一','周二','周三','周四','周五','周六'];
+var WEEK1 = ['日','一','二','三','四','五','六'];
+var DAY = 86400000;
+var H12 = 12 * 3600000;
+
+function $(s, r){ return (r || document).querySelector(s); }
+function $$(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+function pad(n){ return String(n).padStart(2, '0'); }
+function uid(){ return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-5); }
+function round2(n){ return Math.round((Number(n) || 0) * 100) / 100; }
+function money(n){ return (Number(n) || 0).toFixed(2); }
+
+function startOfDay(ts){ var d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+function addDays(ts, n){ var d = new Date(ts); d.setDate(d.getDate() + n); return d.getTime(); }
+function dayKey(ts){
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+function fmtTime(ts){ var d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function fmtFullDate(ts){
+  var d = new Date(ts);
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + WEEK[d.getDay()];
+}
+function durText(ms){
+  var m = Math.max(0, Math.round(ms / 60000));
+  if (m < 1) return '不到1分钟';
+  if (m < 60) return m + '分钟';
+  var h = Math.floor(m / 60), mm = m % 60;
+  if (h < 24) return mm ? h + '小时' + mm + '分' : h + '小时';
+  var dd = Math.floor(h / 24), hh = h % 24;
+  return hh ? dd + '天' + hh + '小时' : dd + '天';
+}
+
+/* ============ 数据 ============ */
+function blank(){
+  return { v: 1, settings: Object.assign({}, DEFAULTS), logs: [], resists: [], onboarded: false };
+}
+function load(){
+  var base = blank();
+  var d;
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (!raw) return base;
+    d = JSON.parse(raw);
+  } catch (e) {
+    return base;
+  }
+  var logs = Array.isArray(d.logs) ? d.logs.filter(function(x){ return x && typeof x.ts === 'number'; }) : [];
+  var resists = Array.isArray(d.resists) ? d.resists.filter(function(x){ return x && typeof x.ts === 'number'; }) : [];
+  logs.sort(function(a, b){ return a.ts - b.ts; });
+  resists.sort(function(a, b){ return a.ts - b.ts; });
+  return {
+    v: 1,
+    settings: Object.assign({}, DEFAULTS, d.settings || {}),
+    logs: logs,
+    resists: resists,
+    onboarded: !!d.onboarded
+  };
+}
+
+var state = load();
+var tab = 'home';
+var statsRange = 7;
+var editingId = null;
+var bump = false;
+var toastTimer = null;
+var lastDay = dayKey(Date.now());
+var storageBroken = false;
+
+function persist(){
+  state.logs.sort(function(a, b){ return a.ts - b.ts; });
+  state.resists.sort(function(a, b){ return a.ts - b.ts; });
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch (e) {
+    if (!storageBroken) {
+      storageBroken = true;
+      toast('浏览器存储不可用，记录可能无法保存');
+    }
+  }
+}
+
+function unitCost(){
+  var s = state.settings;
+  var n = Number(s.cigsPerPack);
+  var p = Number(s.pricePerPack);
+  if (!(n > 0) || !(p >= 0)) return 0;
+  return p / n;
+}
+function costOf(log){
+  return (log && typeof log.cost === 'number') ? log.cost : unitCost();
+}
+function limitNum(){
+  return Math.max(1, Math.round(Number(state.settings.dailyLimit) || 1));
+}
+
+/* ============ 页面外壳 ============ */
+function render(){
+  $('#todayLabel').textContent = fmtFullDate(Date.now());
+  var v = $('#view');
+  if (tab === 'home') v.innerHTML = homeHTML();
+  else if (tab === 'stats') v.innerHTML = statsHTML();
+  else v.innerHTML = settingsHTML();
+  $$('.tabbar button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+}
+
+function switchTab(t){
+  tab = t;
+  if (t === 'settings' && !state.onboarded) {
+    state.onboarded = true;
+    persist();
+  }
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  render();
+}
+
+/* ============ 记录页 ============ */
+function homeHTML(){
+  var now = Date.now();
+  var key = dayKey(now);
+  var today = state.logs.filter(function(l){ return dayKey(l.ts) === key; });
+  var count = today.length;
+  var spent = today.reduce(function(s, l){ return s + costOf(l); }, 0);
+  var limit = limitNum();
+  var over = count > limit;
+  var left = Math.max(0, limit - count);
+  var pct = Math.min(100, (count / limit) * 100);
+  var last = state.logs.length ? state.logs[state.logs.length - 1] : null;
+  var resistToday = state.resists.filter(function(r){ return dayKey(r.ts) === key; }).length;
+
+  var yKey = dayKey(addDays(startOfDay(now), -1));
+  var yCount = state.logs.filter(function(l){ return dayKey(l.ts) === yKey; }).length;
+  var weekFrom = addDays(startOfDay(now), -6);
+  var weekCount = state.logs.filter(function(l){ return l.ts >= weekFrom; }).length;
+  var weekNote = state.logs.length
+    ? '<p class="weeknote">昨天 ' + yCount + ' 根 · 近 7 天 ' + weekCount + ' 根</p>'
+    : '';
+
+  var banner = state.onboarded ? '' :
+    '<div class="banner"><span>先填一下烟价和每日目标，金额才算得准</span>' +
+    '<button data-act="setup">去设置</button></div>';
+
+  var rows = today.map(function(l, i){
+    var gap = i > 0 ? l.ts - today[i - 1].ts : 0;
+    return '<li data-act="edit" data-id="' + l.id + '">' +
+      '<span class="tl-dot"></span>' +
+      '<span class="tl-time">' + fmtTime(l.ts) + '</span>' +
+      '<span class="tl-gap">' + (gap ? '间隔 ' + durText(gap) : '今天第一根') + '</span>' +
+      '<span class="tl-cost">¥' + money(costOf(l)) + '</span>' +
+    '</li>';
+  }).join('');
+
+  var timeline = count
+    ? '<ul class="timeline">' + rows + '</ul><p class="bottom-hint">点一条可以改时间或删除</p>'
+    : '<p class="empty">今天还没有记录。<br>想抽的时候，先点上面那个按钮把它记下来 —— 看见了，才有机会改变它。</p>';
+
+  return '' +
+  banner +
+  '<section class="card hero">' +
+    '<div class="hero-grid">' +
+      '<div>' +
+        '<div class="k">今日已抽</div>' +
+        '<div class="bignum' + (bump ? ' bump' : '') + '">' + count + '<em>根</em></div>' +
+      '</div>' +
+      '<div class="hero-right">' +
+        '<div class="k">今日花费</div>' +
+        '<div class="money">¥' + money(spent) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="bar' + (over ? ' over' : '') + '"><i style="width:' + pct + '%"></i></div>' +
+    '<div class="prog-meta">' +
+      '<span>' + (over
+        ? '<span class="warn">超出目标 ' + (count - limit) + ' 根</span>'
+        : '目标 ' + limit + ' 根 · 还能抽 ' + left + ' 根') + '</span>' +
+      '<span>' + (last
+        ? '距上次 <b id="since">' + durText(now - last.ts) + '</b>'
+        : '还没有任何记录') + '</span>' +
+    '</div>' +
+  '</section>' +
+
+  '<button class="primary smoke" data-act="smoke">' +
+    '<span>我抽烟了</span>' +
+    '<small>点一下 · 记录现在 <b id="btnClock">' + fmtTime(now) + '</b></small>' +
+  '</button>' +
+
+  '<button class="ghost resist" data-act="resist">' +
+    '<span>想抽，但我忍住了</span>' +
+    '<span class="badge">今天 ' + resistToday + ' 次</span>' +
+  '</button>' +
+
+  '<section class="card">' +
+    '<div class="card-head"><h2>今天的时间线</h2>' +
+      (count ? '<span class="hint">' + count + ' 根 · ¥' + money(spent) + '</span>' : '') +
+    '</div>' +
+    timeline +
+  '</section>' +
+  weekNote;
+}
+
+/* ============ 统计页 ============ */
+function countsByDay(){
+  var m = new Map();
+  state.logs.forEach(function(l){
+    var k = dayKey(l.ts);
+    m.set(k, (m.get(k) || 0) + 1);
+  });
+  return m;
+}
+
+function daySeries(n){
+  var today = startOfDay(Date.now());
+  var map = countsByDay();
+  var out = [];
+  for (var i = n - 1; i >= 0; i--) {
+    var s = addDays(today, -i);
+    out.push({
+      date: new Date(s),
+      count: map.get(dayKey(s)) || 0,
+      isToday: i === 0
+    });
+  }
+  return out;
+}
+
+function streakDays(){
+  if (!state.logs.length) return 0;
+  var map = countsByDay();
+  var limit = limitNum();
+  var cursor = startOfDay(Date.now());
+  var first = startOfDay(state.logs[0].ts);
+  var s = 0;
+  while (cursor >= first) {
+    if ((map.get(dayKey(cursor)) || 0) > limit) break;
+    s++;
+    cursor = addDays(cursor, -1);
+  }
+  return s;
+}
+
+function statsHTML(){
+  if (!state.logs.length) {
+    return '<section class="card">' +
+      '<div class="card-head"><h2>统计</h2></div>' +
+      '<p class="empty">还没有数据。<br>记录第一根之后，这里会长出你的趋势图：每天几根、花了多少钱、哪个时段最想抽。</p>' +
+    '</section>' +
+    '<div class="tiles">' +
+      tile('近 7 天日均', '0', '根') +
+      tile('累计花费', '¥0.00', '') +
+    '</div>';
+  }
+
+  var n = statsRange;
+  var series = daySeries(n);
+  var counts = series.map(function(d){ return d.count; });
+  var limit = limitNum();
+  var max = Math.max.apply(null, counts.concat([limit, 1])) * 1.1;
+  var dense = n > 10;
+
+  var bars = series.map(function(d, i){
+    var ratio = d.count / max;
+    var h = d.count ? Math.max(4, ratio * 100) : 0;
+    var pxH = ratio * 110;
+    var label = '';
+    if (!dense) label = WEEK1[d.date.getDay()];
+    else if (i % 5 === 0 || i === n - 1) label = (d.date.getMonth() + 1) + '/' + d.date.getDate();
+    var showNum = !dense && d.count > 0;
+    var inside = pxH >= 30;
+    return '<div class="col">' +
+      '<div class="track">' +
+        '<div class="fill' + (d.count > limit ? ' over' : '') + (d.isToday ? ' today' : '') + '" style="height:' + h + '%">' +
+          (showNum ? '<b' + (inside ? ' class="in"' : '') + '>' + d.count + '</b>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="xlab">' + label + '</div>' +
+    '</div>';
+  }).join('');
+
+  var limitBottom = 21 + (limit / max) * 110;
+
+  /* 24 小时分布（全部记录） */
+  var hours = new Array(24).fill(0);
+  state.logs.forEach(function(l){ hours[new Date(l.ts).getHours()]++; });
+  var maxH = Math.max.apply(null, hours.concat([1]));
+  var peak = 0, peakH = -1;
+  hours.forEach(function(c, h){ if (c > peak) { peak = c; peakH = h; } });
+
+  var hcols = hours.map(function(c, h){
+    var pctH = c ? Math.max(6, (c / maxH) * 100) : 0;
+    return '<div class="hcol" title="' + h + '点 · ' + c + '根">' +
+      '<i class="' + (peak > 0 && h === peakH ? 'peak' : '') + '" style="height:' + pctH + '%"></i>' +
+    '</div>';
+  }).join('');
+
+  var insight = peak > 0
+    ? '最常抽烟的时段：<b>' + pad(peakH) + ':00 – ' + pad((peakH + 1) % 24) + ':00</b>'
+    : '';
+
+  /* 区间指标 */
+  var from = addDays(startOfDay(Date.now()), -(n - 1));
+  var rangeLogs = state.logs.filter(function(l){ return l.ts >= from; });
+  var gaps = [];
+  for (var i = 1; i < rangeLogs.length; i++) {
+    var d = rangeLogs[i].ts - rangeLogs[i - 1].ts;
+    if (d > 0 && d <= H12) gaps.push(d);
+  }
+  var avgGap = gaps.length ? gaps.reduce(function(a, b){ return a + b; }, 0) / gaps.length : 0;
+  var maxGap = gaps.length ? Math.max.apply(null, gaps) : 0;
+  var perDay = rangeLogs.length / n;
+
+  var monthLogs = state.logs.filter(function(l){
+    var a = new Date(l.ts), b = new Date();
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+  });
+  var monthSpent = monthLogs.reduce(function(s, l){ return s + costOf(l); }, 0);
+  var totalSpent = state.logs.reduce(function(s, l){ return s + costOf(l); }, 0);
+  var resistTotal = state.resists.length;
+
+  /* 相比基线 */
+  var baseline = Math.max(0, Number(state.settings.baselinePerDay) || 0);
+  var firstDay = startOfDay(state.logs[0].ts);
+  var days = Math.max(1, Math.floor((startOfDay(Date.now()) - firstDay) / DAY) + 1);
+  var expected = baseline * days;
+  var actual = state.logs.length;
+  var savedCount = expected - actual;
+  var savedMoney = savedCount * unitCost();
+  var streak = streakDays();
+
+  var saveCard;
+  if (baseline <= 0) {
+    saveCard = '<section class="card save neutral">' +
+      '<div class="save-label">省钱换算</div>' +
+      '<div class="save-big">先设置「原本每天抽几根」</div>' +
+      '<div class="save-sub">设为基线后，这里会算出你比过去省下多少钱。</div>' +
+    '</section>';
+  } else if (savedCount > 0) {
+    saveCard = '<section class="card save">' +
+      '<div class="save-label">按每天 ' + baseline + ' 根的习惯算</div>' +
+      '<div class="save-big">省下 ¥' + money(savedMoney) + '</div>' +
+      '<div class="save-sub">' + days + ' 天里少抽 ' + savedCount + ' 根 · 平均每天 ' + (perDay).toFixed(1) + ' 根</div>' +
+    '</section>';
+  } else if (savedCount === 0) {
+    saveCard = '<section class="card save neutral">' +
+      '<div class="save-label">按每天 ' + baseline + ' 根的习惯算</div>' +
+      '<div class="save-big">和过去持平</div>' +
+      '<div class="save-sub">' + days + ' 天共抽 ' + actual + ' 根，正好是原来的量。</div>' +
+    '</section>';
+  } else {
+    saveCard = '<section class="card save neutral">' +
+      '<div class="save-label">按每天 ' + baseline + ' 根的习惯算</div>' +
+      '<div class="save-big">比过去多 ' + (-savedCount) + ' 根</div>' +
+      '<div class="save-sub">' + days + ' 天共抽 ' + actual + ' 根 · 多花 ¥' + money(-savedMoney) + '</div>' +
+    '</section>';
+  }
+
+  return '' +
+  '<div class="seg">' +
+    '<button data-act="range" data-range="7" class="' + (n === 7 ? 'on' : '') + '">近 7 天</button>' +
+    '<button data-act="range" data-range="30" class="' + (n === 30 ? 'on' : '') + '">近 30 天</button>' +
+  '</div>' +
+
+  '<section class="card">' +
+    '<div class="card-head">' +
+      '<h2>每天几根</h2>' +
+      '<span class="legend"><i></i>目标 ' + limit + ' 根</span>' +
+    '</div>' +
+    '<div class="chart">' +
+      '<div class="limitline" style="bottom:' + limitBottom + 'px"></div>' +
+      '<div class="bars' + (dense ? ' dense' : '') + '">' + bars + '</div>' +
+    '</div>' +
+  '</section>' +
+
+  '<div class="tiles">' +
+    tile('近 ' + n + ' 天日均', perDay.toFixed(1), '根') +
+    tile('平均间隔', gaps.length ? durText(avgGap) : '—', '') +
+    tile('最长间隔', gaps.length ? durText(maxGap) : '—', '') +
+    tile('连续达标', String(streak), '天') +
+    tile('本月花费', '¥' + money(monthSpent), '') +
+    tile('累计根数', String(state.logs.length), '根') +
+    tile('累计花费', '¥' + money(totalSpent), '') +
+    tile('忍住次数', String(resistTotal), '次') +
+  '</div>' +
+
+  saveCard +
+
+  '<section class="card">' +
+    '<div class="card-head"><h2>24 小时分布</h2><span class="hint">全部记录</span></div>' +
+    '<div class="hours">' + hcols + '</div>' +
+    '<div class="haxis"><span>0点</span><span>6点</span><span>12点</span><span>18点</span><span>23点</span></div>' +
+    (insight ? '<p class="insight">' + insight + ' —— 这个时段可以提前准备点别的事。</p>' : '') +
+  '</section>';
+}
+
+function tile(label, value, unit){
+  return '<div class="tile"><span>' + label + '</span><strong>' + value +
+    (unit ? '<em>' + unit + '</em>' : '') + '</strong></div>';
+}
+
+/* ============ 设置页 ============ */
+function settingsHTML(){
+  var s = state.settings;
+  return '' +
+  installCardHTML() +
+  '<section class="card">' +
+    '<div class="card-head"><h2>烟价</h2><span class="hint">用来算钱</span></div>' +
+    '<label class="field"><span>每包价格</span>' +
+      '<span class="inputwrap"><input type="number" inputmode="decimal" min="0" step="0.5" data-set="pricePerPack" value="' + s.pricePerPack + '"><em>元</em></span>' +
+    '</label>' +
+    '<label class="field"><span>每包支数</span>' +
+      '<span class="inputwrap"><input type="number" inputmode="numeric" min="1" step="1" data-set="cigsPerPack" value="' + s.cigsPerPack + '"><em>支</em></span>' +
+    '</label>' +
+    '<div class="derived">每根约 <b id="unitCostText">¥' + money(unitCost()) + '</b></div>' +
+  '</section>' +
+
+  '<section class="card">' +
+    '<div class="card-head"><h2>目标</h2><span class="hint">别定太狠，先能坚持</span></div>' +
+    '<label class="field"><span>每天最多抽</span>' +
+      '<span class="inputwrap"><input type="number" inputmode="numeric" min="1" step="1" data-set="dailyLimit" value="' + s.dailyLimit + '"><em>根</em></span>' +
+    '</label>' +
+    '<label class="field"><span>原本每天抽</span>' +
+      '<span class="inputwrap"><input type="number" inputmode="numeric" min="0" step="1" data-set="baselinePerDay" value="' + s.baselinePerDay + '"><em>根</em></span>' +
+    '</label>' +
+    '<div class="derived">「原本每天抽」用来做对比，算出你省下多少钱。</div>' +
+  '</section>' +
+
+  '<section class="card">' +
+    '<div class="card-head"><h2>数据</h2><span class="hint">只存在这台设备</span></div>' +
+    '<button class="ghost wide" data-act="export-csv">导出 CSV<small>用 Excel 打开</small></button>' +
+    '<button class="ghost wide" data-act="backup">导出备份<small>JSON，可换机恢复</small></button>' +
+    '<button class="ghost wide" data-act="restore">导入备份<small>会覆盖现有数据</small></button>' +
+    '<button class="ghost wide danger" data-act="clear">清空全部记录<small>不可撤销</small></button>' +
+  '</section>' +
+
+  '<p class="footnote">' +
+    '数据保存在这台设备的浏览器里，不会上传到任何地方。清除浏览器数据会让记录消失，建议偶尔导出一份备份。<br><br>' +
+    '这不是医疗建议。如果烟瘾比较重，尼古丁替代疗法（贴片、口香糖）和戒烟门诊的成功率会高不少。' +
+  '</p>';
+}
+
+/* ============ 动作 ============ */
+function addSmoke(){
+  var now = Date.now();
+  var rec = { id: uid(), ts: now, cost: round2(unitCost()) };
+  state.logs.push(rec);
+  persist();
+  bump = true;
+  render();
+  bump = false;
+  toast('已记录 ' + fmtTime(now), '撤销', function(){
+    var i = state.logs.findIndex(function(x){ return x.id === rec.id; });
+    if (i > -1) state.logs.splice(i, 1);
+    persist();
+    render();
+  });
+}
+
+function addResist(){
+  var now = Date.now();
+  state.resists.push({ id: uid(), ts: now });
+  persist();
+  render();
+  var c = unitCost();
+  toast(c > 0 ? '忍住了 · 这一根省下 ¥' + money(c) : '记下了，你又忍住一次');
+}
+
+function openEdit(id){
+  var l = state.logs.find(function(x){ return x.id === id; });
+  if (!l) return;
+  editingId = id;
+  $('#editTime').value = toLocalInput(l.ts);
+  var m = $('#modal');
+  m.hidden = false;
+  requestAnimationFrame(function(){ m.classList.add('show'); });
+}
+
+function closeModal(){
+  var m = $('#modal');
+  m.classList.remove('show');
+  m.hidden = true;
+  editingId = null;
+}
+
+function toLocalInput(ts){
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+    'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function saveEdit(){
+  var l = state.logs.find(function(x){ return x.id === editingId; });
+  if (!l) { closeModal(); return; }
+  var v = $('#editTime').value;
+  var ts = v ? new Date(v).getTime() : NaN;
+  if (!isFinite(ts)) { toast('时间格式不对'); return; }
+  if (ts > Date.now() + 60000) { toast('不能记录未来的时间'); return; }
+  l.ts = ts;
+  persist();
+  closeModal();
+  render();
+  toast('已保存');
+}
+
+function deleteEdit(){
+  if (!editingId) { closeModal(); return; }
+  state.logs = state.logs.filter(function(x){ return x.id !== editingId; });
+  persist();
+  closeModal();
+  render();
+  toast('已删除');
+}
+
+/* ============ 导入导出 ============ */
+function download(name, text, type){
+  var blob = new Blob([text], { type: type });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+}
+
+function exportCSV(){
+  if (!state.logs.length) { toast('还没有记录'); return; }
+  var rows = [['日期', '时间', '金额(元)']];
+  state.logs.forEach(function(l){
+    rows.push([dayKey(l.ts), fmtTime(l.ts), money(costOf(l))]);
+  });
+  var csv = '\ufeff' + rows.map(function(r){ return r.join(','); }).join('\r\n');
+  download('抽烟记录-' + dayKey(Date.now()) + '.csv', csv, 'text/csv;charset=utf-8');
+  toast('已导出 ' + state.logs.length + ' 条');
+}
+
+function backup(){
+  download('少抽备份-' + dayKey(Date.now()) + '.json', JSON.stringify(state, null, 2), 'application/json');
+  toast('备份已导出');
+}
+
+function restoreFrom(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    var d;
+    try { d = JSON.parse(reader.result); } catch (e) { toast('文件读不出来'); return; }
+    if (!d || !Array.isArray(d.logs)) { toast('不是本程序的备份文件'); return; }
+    if (!confirm('将导入 ' + d.logs.length + ' 条记录，并覆盖当前数据。确定吗？')) return;
+    state = {
+      v: 1,
+      settings: Object.assign({}, DEFAULTS, d.settings || {}),
+      logs: d.logs.filter(function(x){ return x && typeof x.ts === 'number'; }),
+      resists: Array.isArray(d.resists) ? d.resists : [],
+      onboarded: true
+    };
+    persist();
+    switchTab('home');
+    toast('已导入 ' + state.logs.length + ' 条');
+  };
+  reader.readAsText(file);
+}
+
+function clearAll(){
+  if (!state.logs.length && !state.resists.length) { toast('已经是空的了'); return; }
+  if (!confirm('确定清空全部记录？此操作不能撤销。')) return;
+  state.logs = [];
+  state.resists = [];
+  persist();
+  render();
+  toast('已清空');
+}
+
+/* ============ toast ============ */
+function toast(msg, label, action){
+  var el = $('#toast');
+  $('#toastMsg').textContent = msg;
+  var btn = $('#toastAct');
+  if (label) {
+    btn.hidden = false;
+    btn.textContent = label;
+    btn.onclick = function(){ hideToast(); if (action) action(); };
+  } else {
+    btn.hidden = true;
+    btn.onclick = null;
+  }
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, label ? 4200 : 2400);
+}
+function hideToast(){
+  $('#toast').classList.remove('show');
+}
+
+/* ============ 安装到桌面（PWA） ============ */
+var deferredPrompt = null;
+var installMode = 'none';
+
+function standalone(){
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    window.navigator.standalone === true;
+}
+
+function detectInstall(){
+  if (standalone()) return 'installed';
+  var ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if (deferredPrompt) return 'prompt';
+  if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') return 'none';
+  return 'unsupported';
+}
+
+function installCardHTML(){
+  if (installMode === 'installed') return '';
+  if (installMode === 'ios') {
+    return '<section class="card install">' +
+      '<div class="card-head"><h2>装到桌面</h2><span class="hint">像 App 一样用</span></div>' +
+      '<p>用 Safari 打开本页，然后：</p>' +
+      '<ol class="install-steps"><li>点底部的「分享」按钮</li><li>选「添加到主屏幕」</li></ol>' +
+    '</section>';
+  }
+  if (installMode === 'prompt') {
+    return '<section class="card install">' +
+      '<div class="card-head"><h2>装到桌面</h2><span class="hint">像 App 一样用</span></div>' +
+      '<p>装好后有独立图标，全屏打开、没有地址栏，断网也能记。</p>' +
+      '<button class="primary" data-act="install"><span>添加到主屏幕</span></button>' +
+    '</section>';
+  }
+  if (installMode === 'unsupported') {
+    return '<section class="card install">' +
+      '<div class="card-head"><h2>装到桌面</h2><span class="hint">还没有安装</span></div>' +
+      '<p>现在是用本地文件打开的，浏览器不允许安装。把 app 文件夹放到一个网址上（见 部署说明.md），再用手机浏览器打开，就能「添加到主屏幕」。</p>' +
+    '</section>';
+  }
+  return '';
+}
+
+function refreshInstallCard(){
+  installMode = detectInstall();
+  if (tab === 'settings') render();
+}
+
+function promptInstall(){
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(){
+    deferredPrompt = null;
+    refreshInstallCard();
+  }).catch(function(){});
+}
+
+if (window.addEventListener) {
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    refreshInstallCard();
+  });
+  window.addEventListener('appinstalled', function(){
+    deferredPrompt = null;
+    installMode = 'installed';
+    if (tab === 'settings') render();
+    toast('已装到桌面');
+  });
+}
+
+function registerSW(){
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  var hadController = !!navigator.serviceWorker.controller;
+  var reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+
+/* ============ 事件 ============ */
+document.addEventListener('click', function(e){
+  var tb = e.target.closest('[data-tab]');
+  if (tb) { switchTab(tb.dataset.tab); return; }
+
+  var el = e.target.closest('[data-act]');
+  if (!el) return;
+  var act = el.dataset.act;
+
+  if (act === 'smoke') addSmoke();
+  else if (act === 'resist') addResist();
+  else if (act === 'edit') openEdit(el.dataset.id);
+  else if (act === 'range') { statsRange = Number(el.dataset.range) === 30 ? 30 : 7; render(); }
+  else if (act === 'setup') {
+    state.onboarded = true;
+    persist();
+    switchTab('settings');
+  }
+  else if (act === 'export-csv') exportCSV();
+  else if (act === 'backup') backup();
+  else if (act === 'restore') $('#fileInput').click();
+  else if (act === 'clear') clearAll();
+  else if (act === 'install') promptInstall();
+});
+
+document.addEventListener('input', function(e){
+  var el = e.target.closest('[data-set]');
+  if (!el) return;
+  var k = el.dataset.set;
+  var v = parseFloat(el.value);
+  if (!isFinite(v)) return;
+  state.settings[k] = v;
+  persist();
+  var u = $('#unitCostText');
+  if (u) u.textContent = '¥' + money(unitCost());
+});
+
+document.addEventListener('change', function(e){
+  var el = e.target.closest('[data-set]');
+  if (!el) return;
+  var k = el.dataset.set;
+  var v = parseFloat(el.value);
+  var min = (k === 'pricePerPack' || k === 'baselinePerDay') ? 0 : 1;
+  if (!isFinite(v) || v < min) v = Math.max(min, DEFAULTS[k]);
+  if (k === 'cigsPerPack' || k === 'dailyLimit' || k === 'baselinePerDay') v = Math.round(v);
+  state.settings[k] = v;
+  el.value = v;
+  persist();
+  var u = $('#unitCostText');
+  if (u) u.textContent = '¥' + money(unitCost());
+});
+
+$('#editSave').addEventListener('click', saveEdit);
+$('#editDelete').addEventListener('click', deleteEdit);
+$$('[data-close]').forEach(function(el){ el.addEventListener('click', closeModal); });
+$('#editTime').addEventListener('keydown', function(e){ if (e.key === 'Enter') saveEdit(); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+
+$('#fileInput').addEventListener('change', function(e){
+  var f = e.target.files && e.target.files[0];
+  if (f) restoreFrom(f);
+  e.target.value = '';
+});
+
+/* 每秒刷新时钟与「距上次」 */
+setInterval(function(){
+  var now = Date.now();
+  var k = dayKey(now);
+  if (k !== lastDay) { lastDay = k; render(); return; }
+  if (tab !== 'home') return;
+  var clock = $('#btnClock');
+  if (clock) clock.textContent = fmtTime(now);
+  var since = $('#since');
+  if (since && state.logs.length) {
+    since.textContent = durText(now - state.logs[state.logs.length - 1].ts);
+  }
+}, 1000);
+
+/* 启动 */
+installMode = detectInstall();
+render();
+registerSW();
+})();
+</script>
+</body>
+</html>
